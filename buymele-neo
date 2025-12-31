@@ -1,0 +1,371 @@
+repeat task.wait() until game:IsLoaded()
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local plr = Players.LocalPlayer
+repeat task.wait() until plr
+
+-- =========================
+-- AUTO JOIN MARINE (THÊM VÀO ĐẦU)
+-- =========================
+pcall(function()
+	if not plr.Team or plr.Team.Name ~= "Marines" then
+		ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", "Marines")
+		print("⚓ Auto join phe Marine...")
+	else
+		print("⚓ Đã ở phe Marine sẵn.")
+	end
+end)
+
+-- đợi join team xong (thoát trạng thái "Players")
+repeat task.wait(0.5) until plr.Team and plr.Team.Name ~= "Players"
+
+-- =========================
+-- CONFIG SCRIPT 1
+-- =========================
+local npcPos = Vector3.new(-4972.51611328125, 314.8302307128906, -3222.7587890625)
+
+-- =========================
+-- HELPERS
+-- =========================
+local function getChar()
+    local chr = plr.Character or plr.CharacterAdded:Wait()
+    return chr, chr:WaitForChild("HumanoidRootPart")
+end
+
+local function hasJoinedTeam()
+    return plr.Team ~= nil and plr.Team.Name ~= "Players"
+end
+
+-- Check đã mua Sharkman Karate chưa (chuẩn nhất)
+local function hasSharkmanKarate()
+    local data = plr:FindFirstChild("Data")
+    if data and data:FindFirstChild("FightingStyle") and data.FightingStyle.Value then
+        return tostring(data.FightingStyle.Value) == "Sharkman Karate"
+    end
+
+    -- Fallback (phòng khi game đổi cấu trúc)
+    local chr = plr.Character
+    if chr then
+        for _, v in ipairs(chr:GetChildren()) do
+            if v:IsA("Tool") and v.Name:lower():find("sharkman") then
+                return true
+            end
+        end
+    end
+    for _, v in ipairs(plr.Backpack:GetChildren()) do
+        if v:IsA("Tool") and v.Name:lower():find("sharkman") then
+            return true
+        end
+    end
+    return false
+end
+
+-- Tween tới vị trí (xuyên tường + bay cao)
+local function tweenTo(pos)
+    local _, hrp = getChar()
+
+    -- giữ đứng thẳng (giảm rung)
+    task.spawn(function()
+        while (hrp.Position - pos).Magnitude > 5 do
+            hrp.CFrame = CFrame.new(hrp.Position, hrp.Position + Vector3.new(0, 0, -1))
+            task.wait()
+        end
+    end)
+
+    local safeHeight = 150
+    if pos.Y < safeHeight then
+        pos = Vector3.new(pos.X, safeHeight, pos.Z)
+    end
+
+    local speed = 320
+    local distance = (hrp.Position - pos).Magnitude
+    local time = distance / speed
+
+    local tween = TweenService:Create(
+        hrp,
+        TweenInfo.new(time, Enum.EasingStyle.Linear),
+        { CFrame = CFrame.new(pos) }
+    )
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+local function buySharkmanKarate()
+    -- Remote mua
+    local ok, res = pcall(function()
+        return ReplicatedStorage.Remotes.CommF_:InvokeServer("BuySharkmanKarate")
+    end)
+    return ok, res
+end
+
+-- =========================
+-- RUN SCRIPT 1
+-- =========================
+repeat task.wait(1) until hasJoinedTeam()
+task.wait(5)
+
+tweenTo(npcPos)
+task.wait(1)
+
+-- spam mua đến khi FightingStyle = Sharkman Karate
+while not hasSharkmanKarate() do
+    buySharkmanKarate()
+    task.wait(1)
+end
+
+print("✅ Đã mua Sharkman Karate thành công. Bắt đầu chạy Script 2...")
+
+-- =========================
+-- RUN SCRIPT 2 (BananaHub)
+-- =========================
+repeat wait() until game:IsLoaded() and game.Players.LocalPlayer 
+getgenv().Key = "af04e746e897c36c9d9c8ab9" 
+getgenv().Config = {
+	["Auto Join Dungeon"] = false,
+	["Auto Fire Shoot Heart Leviathan"] = false,
+	["Noti Profile"] = false,
+	["Teleport To Fruit"] = false,
+	["Auto Slap Battle"] = false,
+	["No Frog"] = false,
+	["Auto Dodge Skill Mobs"] = false,
+	["Ignore Craft Volcanic Magnet"] = false,
+	["Auto Trade Azure Ember"] = false,
+	["Auto Present Event"] = false,
+	["Auto Turn On V3"] = true,
+	["Tween Boat To Frozen Dimension"] = false,
+	["Change Size Reel"] = false,
+	["Auto Aimbot Gun"] = false,
+	["Distance Teleport Y"] = 800,
+	["Auto New World"] = false,
+	["Drive Boat To Hydra"] = false,
+	["Random Devil Fruit [ Winter ]"] = false,
+	["Summon Dough King"] = false,
+	["Auto Store Fruit"] = false,
+	["Auto Start Leviathan"] = false,
+	["Auto Sell Fishing"] = false,
+	["ESP Berry"] = false,
+	["Account Pick Slot Raid"] = false,
+	["Auto Multi Raid"] = false,
+	["Change WalkSpeed"] = false,
+	["ESP Island"] = false,
+	["Multi Find Leviathan"] = false,
+	["Reset Teleport"] = false,
+	["Auto Quest Dojo Trainer"] = false,
+	["Auto Buy Boat Beast Hunter"] = false,
+	["Ignore Craft Volcanic Magnet Draco"] = false,
+	["Auto Destroy IDK"] = false,
+	["Select Skills Sword"] = {
+		["Z"] = true,
+		["X"] = true
+	},
+	["Auto Get Rainbow Haki"] = false,
+	["Boost Fps"] = true,
+	["Auto Spawn Kitsune Island"] = false,
+	["Fully Trial Draco"] = false,
+	["Auto Trial"] = false,
+	["Account Buy Chip"] = false,
+	["Auto Attack Dungeon"] = false,
+	["Kill players When complete Trial"] = false,
+	["Hop Server Elite Hunter"] = false,
+	["Auto Upgrade Sword Inventory"] = false,
+	["Random Devil Fruit"] = false,
+	["Use skill fast dont hold"] = false,
+	["Auto Collect Bone"] = false,
+	["Auto Aimbot"] = false,
+	["Hop Server Find Boss"] = false,
+	["Use Click M1 Fruit For Sea Event"] = false,
+	["Use Dragonstorm For Sea Event"] = false,
+	["Auto Open Gift"] = false,
+	["Kill All Boss"] = false,
+	["Speed Tween"] = 350,
+	["Auto Turn On Observation"] = true,
+	["Values Azure Ember"] = 10,
+	["Auto Tween To Event Fishing Spot"] = false,
+	["Auto Summon Rip Indra"] = false,
+	["Noclip"] = false,
+	["Walk On Water "] = true,
+	["Hop Find Katakuri"] = false,
+	["Input WalkSpeed"] = 200,
+	["Select Zone"] = "Zone 6",
+	["Auto Touch Pad Haki"] = false,
+	["Webhook Find Mirage"] = false,
+	["Attack Dough King"] = false,
+	["Auto Pick Card Dungeon"] = false,
+	["Select Skills Gun"] = {
+		["Z"] = true,
+		["X"] = true
+	},
+	["Spam Join"] = false,
+	["Use Portal Teleport"] = false,
+	["Auto Farm Mastery 600 Sword In Inventory"] = false,
+	["Teleport Player"] = false,
+	["Summon Soul Reaper"] = false,
+	["Auto Yama"] = false,
+	["Hop Sever Raid"] = false,
+	["Auto Get Ghoul"] = false,
+	["Min Player Join Dungeon"] = 2,
+	["Summon Darkbeard"] = false,
+	["Auto Turn On V4"] = false,
+	["Auto Finish Train Quest"] = false,
+	["Teleport Y"] = true,
+	["ESP Player"] = false,
+	["Buy Blox Fruit Sniper Shop"] = false,
+	["Auto Yoru Mini"] = false,
+	["Auto Dodge Skill Terrorshark"] = false,
+	["Auto Upgrade Gun Inventory"] = false,
+	["Auto Trade Bone"] = false,
+	["Auto Chest Hop"] = false,
+	["Auto Get Cyborg"] = false,
+	["Teleport Boat Other CFrame if Rough Sea"] = true,
+	["Auto Turn On V3 Near Door"] = false,
+	["Auto Yoru Mini (Hop Server)"] = false,
+	["Auto Awake Fruit"] = false,
+	["Auto Soul Guitar"] = false,
+	["Hop Server [ Haki color or Legendary Sword]"] = false,
+	["Auto Open Chest"] = false,
+	["Auto Factory"] = false,
+	["Attack Multi Segments Leviathan"] = false,
+	["Ignore Attack Katakuri"] = false,
+	["Auto Turn On Buso"] = true,
+	["White Screen"] = false,
+	["Auto Saber"] = false,
+	["Auto Fishing"] = false,
+	["Change Speed Boat"] = false,
+	["Auto Summon Soul Ember"] = false,
+	["Auto Buy Chip and Attack Law"] = false,
+	["Just Use Skill when Player Active Ken"] = false,
+	["Auto Store Gift"] = false,
+	["Value Damage Multi Segments"] = 30000,
+	["Auto Pull Lever"] = false,
+	["Farm Observation [ Hop Server ]"] = false,
+	["Distance Farm Aura"] = 300,
+	["Auto UP Observation V2"] = false,
+	["Attack No Animation "] = true,
+	["Auto Attack Leviathan"] = false,
+	["Hop Find Darkbeard"] = false,
+	["Kill Mob"] = false,
+	["Webhook Store Fruit"] = false,
+	["Auto TTK"] = false,
+	["Auto Buy Spy"] = false,
+	["Drive Boat To Tiki"] = false,
+	["Auto Event Prehistoric Island"] = false,
+	["Attack Soul Reaper"] = false,
+	["Use Click M1 Skull Guitar Leviathan"] = false,
+	["Farm Mastery"] = false,
+	["Use Click M1 Fruit Leviathan"] = false,
+	["Multi Trial"] = false,
+	["Auto Load Script"] = false,
+	["Auto Dodge Skill Seabeast"] = false,
+	["Auto Collect Egg"] = false,
+	["% Health Player"] = 40,
+	["Auto Upgrade Race V2-V3"] = false,
+	["Auto Find Leviathan"] = false,
+	["Select Boat"] = "Guardian",
+	["Farm Material"] = false,
+	["Hop Server [Trial Or Pull Lever]"] = false,
+	["Use Your Boat Beast Hunter"] = false,
+	["Select Skills Blox Fruit"] = {
+		["X"] = true,
+		["C"] = true,
+		["Z"] = true,
+		["V"] = true,
+		["F"] = true
+	},
+	["Get Fruit In Inventory Low Beli"] = false,
+	["Bring Mob Count"] = 2,
+	["Teleport Frozen Dimension"] = false,
+	["Will Back When over 10km"] = true,
+	["Black Screen"] = false,
+	["Auto Change Dragonstorm With Skull Guitar"] = false,
+	["Auto Repair Ur Ship"] = false,
+	["Auto Quest [Katakuri/Bone/Tyrant]"] = false,
+	["Account Start Dungeon"] = false,
+	["Kill Boss"] = false,
+	["Auto Attack All Mob and Boss"] = false,
+	["Stack Train With Trial Race"] = false,
+	["Auto rejoin Disconnect"] = false,
+	["Auto Click"] = true,
+	["Auto Find Mirage"] = false,
+	["Select Weapons Use Skill"] = {
+		["Melee"] = true,
+		["Sword"] = true
+	},
+	["Auto Collect Soul Ember"] = false,
+	["Farm Observation"] = false,
+	["Hop Find Berry"] = false,
+	["Auto Trial Draco"] = false,
+	["Hop Server Kitsune Island"] = false,
+	["Tween Until Have Sea Event"] = true,
+	["Attack Darkbeard"] = false,
+	["Auto Finish Train Draco Quest"] = false,
+	["Start Farm"] = false,
+	["Auto Pirate Raid"] = false,
+	["Webhook Destroy IDK"] = false,
+	["Speed Boat Auto Drive"] = 300,
+	["Auto Choose Gears"] = false,
+	["Auto Collect Berry"] = false,
+	["Select Sea Events"] = {
+		["Shark"] = true,
+		["Terrorshark"] = true,
+		["Ship"] = true,
+		["Piranha"] = true
+	},
+	["Auto Buy Gear Draco"] = false,
+	["Auto Get Fully Cyborg"] = false,
+	["Value Speed Fly Boat"] = 3,
+	["Auto Elite Hunter"] = false,
+	["Teleport To Kitsune Island"] = false,
+	["ESP Fruit"] = false,
+	["Time Hop Server"] = 10,
+	["Health %"] = 40,
+	["Teleport Acient Clock"] = false,
+	["Select Skills Melee"] = {
+		["X"] = true,
+		["C"] = true,
+		["Z"] = true
+	},
+	["Attack Rip Indra"] = false,
+	["Fly Boat"] = false,
+	["Ping Discord"] = false,
+	["Value Collect Chest to Hop"] = 20,
+	["Bring Mob"] = true,
+	["Hop Server Get Ghoul"] = false,
+	["Reset Character Buy Boat"] = true,
+	["Auto Sea Event"] = true,
+	["Auto Stats"] = false,
+	["Teleport To Fruit [ Hop Server ]"] = false,
+	["Select Weapon"] = "Melee",
+	["Auto Get Cyborg Hop Collect Chest"] = false,
+	["Auto Sea Event With Friend"] = false,
+	["Auto Reset Character"] = false,
+	["Auto Third World"] = false,
+	["Auto Chest"] = false,
+	["Auto Raid"] = false,
+	["Auto Buy Legendary Sword"] = false,
+	["Kill Aura With DragonStorm"] = false,
+	["Auto Buy Haki Color"] = false,
+	["Auto Craft Item Shark Anchor"] = true,
+	["Use Skill when Kill Player"] = false,
+	["Auto Tushita"] = false,
+	["Auto Quest Dragon Hunter"] = false,
+	["Auto Farm Mastery 600 Melees"] = false,
+	["Remove Notifications"] = false,
+	["Use Click M1 Skull Guitar For Sea Event"] = false,
+	["Auto CDK"] = false,
+	["Auto Crafting Volcanic Magnet"] = false,
+	["Tween Safe if have Items"] = false,
+	["Ignore Collect Bone"] = false,
+	["Fully Event Prehistoric Island"] = false,
+	["Auto Find Prehistoric Island"] = false,
+	["Auto Buy Gear"] = false,
+	["Input JumpPower"] = 200,
+	["Change JumpPower"] = false,
+	["Hop Find Dough King"] = false,
+	["Webhook Find Prehistoric Island"] = false,
+	["Webhook Find Leviathan"] = false,
+	["Auto Upgrade Race V2-V3 Draco"] = false,
+	["Auto Accept Quest Fishing"] = false,
+	["Value Speed Boat"] = 200
+}
+loadstring(game:HttpGet("https://raw.githubusercontent.com/obiiyeuem/vthangsitink/main/BananaHub.lua"))()
