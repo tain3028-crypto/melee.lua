@@ -1,7 +1,8 @@
 local HttpService = game:GetService("HttpService")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
 
 -- 1. ĐIỀN LINK FIREBASE CỦA BẠN (Nhớ thêm .json vào cuối link)
-local BaseURL = "https://phuoc-245b8-default-rtdb.asia-southeast1.firebasedatabase.app/KeySystem"
+local DatabaseURL = "https://phuoc-245b8-default-rtdb.asia-southeast1.firebasedatabase.app/KeySystem.json"
 
 local TIME_3_MINS = 180
 local TIME_7_DAYS = 7 * 24 * 60 * 60
@@ -68,10 +69,18 @@ local KeyCategories = {
 }
 
 local Config = {
+    LockedHWID = (getgenv().tmconfig and getgenv().tmconfig.key2hiw),
+
     MyKey =  (getgenv().tmconfig and getgenv().tmconfig.key) or "key-mac-dinh",
     MaxTabs = (getgenv().tmconfig and getgenv().tmconfig.max_tabs) or 40,
     DanhSachKey = {}
 }
+
+local CurrentPC_HWID = RbxAnalyticsService:GetClientId()
+if CurrentPC_HWID ~= Config.LockedHWID then
+    game.Players.LocalPlayer:Kick("\n[LỖI BẢO MẬT H]\nThiết bị không trùng khớp với script!\nH: " .. CurrentPC_H)
+    return -- Dừng toàn bộ script
+end
 
 -- Tự động chuyển danh sách nhóm vào danh sách tổng để script check
 for duration, keys in pairs(KeyCategories) do
@@ -80,26 +89,26 @@ for duration, keys in pairs(KeyCategories) do
     end
 end
 
-local function GetKeyData(key)
+local function GetDB()
     local success, response = pcall(function()
         return request({
-            Url = BaseURL .. "/" .. key .. ".json",
+            Url = DatabaseURL,
             Method = "GET"
         })
     end)
     if success and response.StatusCode == 200 and response.Body ~= "null" then
         return HttpService:JSONDecode(response.Body)
     end
-    return nil
+    return {}
 end
 
-local function SaveKeyData(key, data)
+local function SaveDB(db)
     pcall(function()
         request({
-            Url = BaseURL .. "/" .. key .. ".json",
+            Url = DatabaseURL,
             Method = "PUT",
             Headers = {["Content-Type"] = "application/json"},
-            Body = HttpService:JSONEncode(data)
+            Body = HttpService:JSONEncode(db)
         })
     end)
 end
@@ -119,6 +128,7 @@ local MyTabID = tostring(math.random(100000, 999999))
 local function CheckAuth()
     local inputKey = Config.MyKey
     local currentTime = os.time()
+    local db = GetDB()
 
     -- 1. Check xem key có trong danh sách trắng không
     local keyDuration = Config.DanhSachKey[inputKey]
@@ -126,8 +136,11 @@ local function CheckAuth()
         return false, "Key không tồn tại trong hệ thống!" 
     end
 
-    -- 2. Lấy dữ liệu trên Firebas
-    local kData = GetKeyData(inputKey) or {StartTime = 0, IsExpired = false, ActiveTabs = {}}
+    -- 2. Lấy dữ liệu trên Firebase
+    if not db[inputKey] then
+        db[inputKey] = {StartTime = 0, IsExpired = false, ActiveTabs = {}}
+    end
+    local kData = db[inputKey]
 
     -- 3. Check xem đã bị khóa vĩnh viễn chưa
     if kData.IsExpired then 
@@ -147,25 +160,23 @@ local function CheckAuth()
         
         if timePassed >= keyDuration then
             kData.IsExpired = true
-            SaveKeyData(inputKey, kData)
-            return false, "Thời hạn key đã hết"
+            db[inputKey] = kData
+            SaveDB(db)
+            return false, "Thời hạn key đã hết ("..FormatTime(keyDuration)..")!"
         end
     end
 
     -- 6. Quản lý số Tab (Concurrency)
     local updatedTabs = {}
     local onlineCount = 0
-    local isMyTabActive = false
-
     for id, lastSeen in pairs(kData.ActiveTabs or {}) do
         if (currentTime - lastSeen) < 15 then
             updatedTabs[id] = lastSeen
             onlineCount = onlineCount + 1
-            if id == MyTabID then isMyTabActive = true end
         end
     end
 
-    if not isMyTabActive then
+    if not updatedTabs[MyTabID] then
         if onlineCount >= Config.MaxTabs then
             return false, "Key đã đạt giới hạn " .. Config.MaxTabs .. " tab!"
         end
@@ -174,8 +185,9 @@ local function CheckAuth()
 
     updatedTabs[MyTabID] = currentTime
     kData.ActiveTabs = updatedTabs
-   
-    SaveKeyData(inputKey, kData)
+    db[inputKey] = kData
+    
+    SaveDB(db)
     return true, onlineCount, timeLeft
 end
 
@@ -933,22 +945,16 @@ else
     print("HẠN DÙNG: " .. FormatTime(timeLeft))
     print("SỐ TAB: " .. result .. "/" .. Config.MaxTabs)
     print("------------------------------------------")
-    task.wait(1) 
-    local reCheck, reResult = CheckAuth()
+
+    StartFarmScript()
     
-    if not reCheck then
-        game.Players.LocalPlayer:Kick("\n[HỆ THỐNG KEY]\n" .. reResult)
-    else
-        StartFarmScript()
-    
-        task.spawn(function()
-            while task.wait(5) do
-                local ok, msg = CheckAuth()
-                if not ok then
-                    game.Players.LocalPlayer:Kick("\n[CẢNH BÁO]\n" .. msg)
-                    break
-                end
+    task.spawn(function()
+        while task.wait(5) do
+            local ok, msg = CheckAuth()
+            if not ok then
+                game.Players.LocalPlayer:Kick("\n[CẢNH BÁO]\n" .. msg)
+                break
             end
-        end)
-    end
+        end
+    end)
 end
