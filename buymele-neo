@@ -813,6 +813,102 @@ end
 -- Chạy hàm logic trong luồng riêng để không bị treo script khác
 spawn(AutoEquipLogic)
 task.wait(10)
+-- Đợi game load hoàn tất mới bắt đầu chạy script
+repeat task.wait() until game:IsLoaded()
+
+--// CONFIG
+local Config = {
+    Sword = "Yama" -- Điền tên thanh kiếm vào đây
+}
+
+--// Service
+local Players = game:GetService("Players")
+local Rep = game:GetService("ReplicatedStorage")
+
+-- Đảm bảo lấy được LocalPlayer trong môi trường Autoexec
+local LocalPlayer = Players.LocalPlayer
+while not LocalPlayer do
+    task.wait(0.5)
+    LocalPlayer = Players.LocalPlayer
+end
+
+--// Các remote hỗ trợ load item
+local function getRemotes()
+    return Rep:FindFirstChild("Remotes") or Rep
+end
+
+local tryRemotesList = {"LoadItem", "LoadGear", "EquipItem", "Load", "LoadFromInv", "LoadItemFromInv", "GiveItem"}
+
+-- Hàm gọi server để lấy kiếm
+local function tryLoadSword(name)
+    local Remotes = getRemotes()
+    for _, r in ipairs(tryRemotesList) do
+        local ok = pcall(function()
+            local CommF = Remotes:FindFirstChild("CommF_")
+            if CommF and CommF.InvokeServer then
+                CommF:InvokeServer(r, name)
+            elseif Remotes:FindFirstChild(r) and Remotes[r].InvokeServer then
+                Remotes[r]:InvokeServer(r, name)
+            end
+        end)
+        if ok then return true end
+    end
+    return false
+end
+
+-- Hàm cầm kiếm lên tay
+local function equipToHand(name)
+    local char = LocalPlayer.Character
+    if not char then return false end
+    
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    if not backpack then return false end
+    
+    local tool = backpack:FindFirstChild(name) or char:FindFirstChild(name)
+    
+    if tool and char:FindFirstChild("Humanoid") then
+        pcall(function() 
+            char.Humanoid:EquipTool(tool) 
+        end)
+        return true
+    end
+    return false
+end
+
+--// HÀM CHÍNH CHO AUTOEXEC
+local function startScript()
+    print("🚀 [Autoexec] Script đã tải. Đang chờ 40 giây để trang bị...")
+    task.wait(20) 
+
+    if Config.Sword == "" then 
+        print("⚠️ [Autoexec] Chưa nhập tên kiếm!")
+        return 
+    end
+
+    -- Đợi nhân vật xuất hiện hoàn toàn
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    task.wait(2) -- Chờ thêm 2s để chắc chắn dữ liệu nhân vật đã đồng bộ
+
+    if not char:FindFirstChild(Config.Sword) then
+        print("⚔️ [Autoexec] Đang lấy kiếm: " .. Config.Sword)
+        
+        tryLoadSword(Config.Sword)
+        task.wait(1) -- Chờ server xử lý việc bỏ kiếm vào Backpack
+        
+        local success = equipToHand(Config.Sword)
+        if success then
+            print("✅ [Autoexec] Đã trang bị thành công!")
+        else
+            print("❌ [Autoexec] Thất bại. Có thể kiếm không có trong kho đồ.")
+        end
+    else
+        print("✅ [Autoexec] Kiếm đã được trang bị sẵn.")
+    end
+end
+
+-- Chạy hàm chính
+task.spawn(startScript)
+task.wait(10)
 -- Cấu hình
 task.wait(50)
 local TIME_LIMIT = 230 -- 5 phút
