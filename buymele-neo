@@ -6,7 +6,7 @@ local Config = {
     MyKey = "key-test-3phutif", -- Nhập key để test
 
      DanhSachKey = {
-        ["key-test-3phutif"] = 60,                   -- 3 phút
+        ["key-test-3pe2hutif"] = 60,                   -- 3 phút
         ["e3key-testge-fhhggg3"] = 604800,      
         ["key-7ngay-abjc"] = 7 * 24 * 60 * 60,       -- 7 ngày (604,800 giây)
   	    ["j-N8sj4rn-84ndo4sd"] = 604800,
