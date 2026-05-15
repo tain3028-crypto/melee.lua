@@ -3,7 +3,7 @@ local HttpService = game:GetService("HttpService")
 local DatabaseURL = "https://phuoc-245b8-default-rtdb.asia-southeast1.firebasedatabase.app/.json"
 
 local Config = {
-    MyKey = "", -- Nhập key để test
+    MyKey = "key-7ngay-abc", -- Nhập key để test
 
      DanhSachKey = {
         ["key-test-3phut"] = 180,                   -- 3 phút
